@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Happy Birthday</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Doto:wght@400;500;600;700;900&family=Montserrat:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Space+Mono:wght@400;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --accent: #c77dff;
+      --accent-dim: #c77dff55;
+      --accent-glow: #c77dffaa;
+      --bg: #06030a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: 'Montserrat', sans-serif;
+    }
+
+    #matrix {
+      position: fixed;
+      inset: 0;
+      display: block;
+      z-index: 0;
+    }
+
+    #orbs {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    #fireworks {
+      position: fixed;
+      inset: 0;
+      z-index: 8;
+      pointer-events: none;
+    }
+
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(6px);
+      opacity: 0.75;
+      mix-blend-mode: screen;
+    }
+
+    /* ---------- start overlay ---------- */
+    #start-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 28px;
+      background: radial-gradient(circle at 50% 40%, #0d0410 0%, #06030a 70%);
+      transition: opacity .8s ease;
+    }
+
+    #start-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    #start-btn {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 2px;
+      color: #0a0508;
+      background: var(--accent);
+      border: none;
+      padding: 16px 42px;
+      border-radius: 2px;
+      cursor: pointer;
+      box-shadow: 0 0 30px var(--accent-glow);
+      transition: transform .25s ease, box-shadow .25s ease;
+    }
+
+    #start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 45px var(--accent-glow);
+    }
+
+    /* ---------- color picker ---------- */
+    #palette {
+      position: fixed;
+      top: 22px;
+      right: 22px;
+      z-index: 30;
+      display: flex;
+      gap: 10px;
+      background: rgba(10, 6, 12, 0.5);
+      padding: 10px 12px;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(6px);
+    }
+
+    .swatch {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      transition: transform .2s ease, border-color .2s ease;
+    }
+
+    .swatch:hover {
+      transform: scale(1.15);
+    }
+
+    .swatch.active {
+      border-color: #fff;
+    }
+
+    /* ---------- text sequence ---------- */
+    #stage {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+    }
+
+    .scene {
+      position: absolute;
+      opacity: 0;
+      transform: scale(0.92);
+      transition: opacity 1s ease, transform 1.2s ease;
+      width: 90%;
+    }
+
+    .scene.show {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* =========================================================
+     GLITCH TEXT — kiểu chữ dùng chung cho mọi dòng, giống số đếm
+     ========================================================= */
+    .glitch-text {
+      position: relative;
+      display: inline-block;
+      font-family: 'Doto', sans-serif;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow:
+        0 0 2px var(--accent),
+        0 0 18px var(--accent-glow),
+        0 0 46px var(--accent-dim);
+    }
+
+    .scene:not(.show) .glitch-text,
+    .scene:not(.show) .glitch-text::before,
+    .scene:not(.show) .glitch-text::after {
+      animation-play-state: paused !important;
+    }
+
+    .glitch-text::before,
+    .glitch-text::after {
+      content: attr(data-val);
+      position: absolute;
+      inset: 0;
+      color: transparent;
+    }
+
+    .glitch-text::before {
+      color: #e0aaff;
+      opacity: 0.2;
+      transform: translate(2px, 0);
+      mix-blend-mode: screen;
+      animation: rgbSplitA 900ms infinite;
+    }
+
+    .glitch-text::after {
+      color: #ffffff;
+      opacity: 0.15;
+      transform: translate(-2px, 0);
+      mix-blend-mode: screen;
+      animation: rgbSplitB 900ms infinite;
+    }
+
+    .glitch-text.glitch-white {
+      color: #ffffff;
+    }
+
+    .glitch-text.glitch-light {
+      color: #ffffff;
+    }
+
+    @keyframes numFlicker {
+
+      0%,
+      89%,
+      100% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 0.5;
+      }
+
+      91% {
+        opacity: 1;
+      }
+
+      92% {
+        opacity: 0.7;
+      }
+
+      93% {
+        opacity: 1;
+      }
+    }
+
+    @keyframes rgbSplitA {
+
+      0%,
+      100% {
+        transform: translate(3px, 0);
+      }
+
+      50% {
+        transform: translate(-2px, 1px);
+      }
+    }
+
+    @keyframes rgbSplitB {
+
+      0%,
+      100% {
+        transform: translate(-3px, 0);
+      }
+
+      50% {
+        transform: translate(2px, -1px);
+      }
+    }
+
+    /* scanline sweep across whole screen for extra motion */
+    #scanline {
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: 0;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
+      z-index: 15;
+      pointer-events: none;
+      animation: scanMove 5s linear infinite;
+      opacity: 0.5;
+      will-change: transform;
+    }
+
+    @keyframes scanMove {
+      0% {
+        transform: translateY(-10px);
+      }
+
+      100% {
+        transform: translateY(100vh);
+      }
+    }
+
+    #scene-hbd .line2 {
+      font-size: clamp(34px, 8.5vw, 92px);
+      letter-spacing: 1px;
+      animation: focus-in-expand 1s cubic-bezier(0.250, 0.460, 0.450, 0.940) both, numFlicker 3.2s infinite steps(1), softJitter 1100ms infinite;
+    }
+
+    @keyframes softJitter {
+
+      0%,
+      100% {
+        transform: translate(0, 0);
+      }
+
+      50% {
+        transform: translate(0.6px, -0.6px);
+      }
+    }
+
+    #scene-name .name {
+      font-size: clamp(38px, 8.5vw, 100px);
+      line-height: 1.05;
+      letter-spacing: 0px;
+      animation: focus-in-expand 1s cubic-bezier(0.250, 0.460, 0.450, 0.940) both, softJitter 1200ms infinite, numFlicker 4s infinite steps(1);
+    }
+
+    #scene-date .date {
+      font-size: clamp(28px, 6.5vw, 58px);
+      letter-spacing: 4px;
+      border-top: 1px solid var(--accent-dim);
+      border-bottom: 1px solid var(--accent-dim);
+      padding: 24px 10px;
+      animation: focus-in-expand 1s cubic-bezier(0.250, 0.460, 0.450, 0.940) both, softJitter 1150ms infinite;
+    }
+
+    #scene-final .final2 {
+      font-size: clamp(42px, 10vw, 120px);
+      line-height: 1;
+      letter-spacing: 2px;
+      color: #ffffff;
+      text-shadow: 0 0 10px #fff, 0 0 40px var(--accent-glow), 0 0 80px var(--accent-dim);
+      animation: focus-in-expand 1s cubic-bezier(0.250, 0.460, 0.450, 0.940) both, numFlicker 2.8s infinite steps(1), softJitter 1050ms infinite, pulseGlow 1.8s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+
+      0%,
+      100% {
+        text-shadow: 0 0 10px #fff, 0 0 40px var(--accent-glow), 0 0 80px var(--accent-dim);
+      }
+
+      50% {
+        text-shadow: 0 0 15px #fff, 0 0 60px var(--accent-glow), 0 0 120px var(--accent-dim);
+      }
+    }
+
+    #ytplayer {
+      position: fixed;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ----------------------------------------------
+   * Animista — focus-in-expand
+   * ---------------------------------------------- */
+    @-webkit-keyframes focus-in-expand {
+      0% {
+        letter-spacing: -0.5em;
+        -webkit-filter: blur(12px);
+        filter: blur(12px);
+        opacity: 0;
+      }
+
+      100% {
+        -webkit-filter: blur(0px);
+        filter: blur(0px);
+        opacity: 1;
+      }
+    }
+
+    @keyframes focus-in-expand {
+      0% {
+        letter-spacing: -0.5em;
+        -webkit-filter: blur(12px);
+        filter: blur(12px);
+        opacity: 0;
+      }
+
+      100% {
+        -webkit-filter: blur(0px);
+        filter: blur(0px);
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .scene {
+        transition: none;
+      }
+    }
+
+    /* ---------- wish scene ---------- */
+    #scene-wish {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wish-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 16px;
+      padding: 36px 32px;
+      max-width: 600px;
+      width: 90%;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 40px rgba(255, 59, 92, 0.08), inset 0 0 30px rgba(255, 255, 255, 0.02);
+      text-align: left;
+    }
+
+    .wish-line {
+      font-family: 'Montserrat', sans-serif;
+      font-size: clamp(13px, 2.8vw, 16px);
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.88);
+      margin-bottom: 12px;
+      min-height: 1.7em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .wish-line.typing {
+      opacity: 1;
+    }
+
+    .wish-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--accent);
+      margin-left: 2px;
+      vertical-align: text-bottom;
+      animation: cursorBlink 600ms steps(1) infinite;
+      box-shadow: 0 0 6px var(--accent-glow);
+    }
+
+    @keyframes cursorBlink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .wish-signature {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      font-size: clamp(16px, 3.5vw, 22px);
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-dim);
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      min-height: 1.5em;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .wish-signature.typing {
+      opacity: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="matrix"></canvas>
+  <div id="orbs"></div>
+  <canvas id="fireworks"></canvas>
+  <div id="scanline"></div>
+
+  <div id="palette">
+    <div class="swatch" style="background:#ff3b5c" data-color="#ff3b5c" title="Hồng đỏ"></div>
+    <div class="swatch" style="background:#39ff8f" data-color="#39ff8f" title="Xanh lá"></div>
+    <div class="swatch" style="background:#4cc9f0" data-color="#4cc9f0" title="Xanh dương"></div>
+    <div class="swatch" style="background:#ffd166" data-color="#ffd166" title="Vàng"></div>
+    <div class="swatch active" style="background:#c77dff" data-color="#c77dff" title="Tím"></div>
+  </div>
+
+  <div id="stage">
+    <div class="scene" id="scene-hbd">
+      <div class="line2 glitch-text glitch-white" id="hbd-text" data-val="HAPPY BIRTHDAY">HAPPY BIRTHDAY</div>
+    </div>
+
+    <div class="scene" id="scene-name">
+      <div class="name glitch-text glitch-light" id="name-text" data-val="Tên Của Bạn">Tên Của Bạn</div>
+    </div>
+
+    <div class="scene" id="scene-date">
+      <div class="date glitch-text glitch-white" id="date-text" data-val="01 / 01 / 2000">01 / 01 / 2000</div>
+    </div>
+
+    <div class="scene" id="scene-final">
+      <div class="final2 glitch-text" id="final-text" data-val="HAPPY 43">HAPPY 43+</div>
+    </div>
+
+    <div class="scene" id="scene-wish">
+      <div class="wish-card">
+        <div class="wish-line" data-text="Chúc mừng sinh nhật cô ạ! 😍"></div>
+        <div class="wish-line" data-text="Cháu chúc cô thật nhiều sức khoẻ và vẫn đẹp xinh mỗi ngày hihi."></div>
+        <div class="wish-line" data-text="Chúc cô luôn vui vẻ, bình an và may mắn trong cuộc sống, mỗi ngày thức dậy là 1 niềm vui và đặc biệt là tràn ngập hạnh phúc ạa."></div>
+        <div class="wish-line" data-text="Tuy thời gian cũng chưa đủ lâu nhưng cháu rất vui khi được làm quen với gia đình mình ạ, đối với cháu mọi cuộc gặp gỡ đều là may mắn, cháu mong cô cháu mình sẽ được gần gũi và nhiều iu thương hơn ạ 🤍"></div>
+        <div class="wish-signature" data-text="Happy Birthday 💕 — Vân Anh"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="start-screen">
+    <button id="start-btn">BẮT ĐẦU</button>
+  </div>
+
+  <!-- Background music -->
+  <audio id="bgmusic" src="KH%C3%9AC%20H%C3%81T%20M%E1%BB%AANG%20SINH%20NH%E1%BA%ACT%20-%20PHAN%20%C4%90INH%20T%C3%99NG%20(%20OFFICIAL%20VIDEO)%20%5BWu8NeFXaoOc%5D.mp3" loop preload="auto"></audio>
+
+  <script>
+    /* =========================================================
+       MOCK DATA — sửa 2 dòng dưới đây khi có tên & ngày sinh thật
+       Lưu ý: font chữ (Doto) không hỗ trợ tốt dấu tiếng Việt,
+       nên hãy nhập tên KHÔNG DẤU (vd: "Nguyen Van A") để hiển thị đẹp
+       ========================================================= */
+    const PERSON_NAME = "Co Hong";
+    const BIRTH_DATE = "12 / 09 / 1983";
+
+    function setGlitchText(el, text) {
+      el.textContent = text;
+      el.setAttribute('data-val', text);
+    }
+    setGlitchText(document.getElementById('name-text'), PERSON_NAME);
+    setGlitchText(document.getElementById('date-text'), BIRTH_DATE);
+
+    /* ---------------- Matrix rain ---------------- */
+    const canvas = document.getElementById('matrix');
+    const ctx = canvas.getContext('2d', { alpha: false });
+    let W, H, columns, drops;
+    const CHARS = "HAPPYBIRTHDAY".split('').filter((c, i, arr) => arr.indexOf(c) === i).join('');
+    const fontSize = 14;
+    const RAIN_FONT = "bold " + fontSize + "px 'Space Mono', monospace";
+
+    let currentColor = "#c77dff";
+
+    function resize() {
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      columns = Math.floor(W / fontSize);
+      drops = new Array(columns).fill(0).map(() => Math.floor(Math.random() * -50));
+      ctx.font = RAIN_FONT;
+      ctx.textBaseline = 'top';
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    function hexToRgb(hex) {
+      const v = parseInt(hex.slice(1), 16);
+      return [(v >> 16) & 255, (v >> 8) & 255, v & 255];
+    }
+
+    let lastFrameTime = 0;
+    const FRAME_INTERVAL = 60; // ms between updates — higher = slower rain
+
+    function drawMatrix(timestamp) {
+      requestAnimationFrame(drawMatrix);
+      if (timestamp - lastFrameTime < FRAME_INTERVAL) return;
+      lastFrameTime = timestamp;
+
+      ctx.fillStyle = "rgba(6,3,10,0.16)";
+      ctx.fillRect(0, 0, W, H);
+
+      const [r, g, b] = hexToRgb(currentColor);
+
+      for (let i = 0; i < columns; i++) {
+        const char = CHARS[Math.floor(Math.random() * CHARS.length)];
+        const x = i * fontSize;
+        const y = drops[i] * fontSize;
+
+        const alpha = 0.4 + Math.random() * 0.55;
+        ctx.fillStyle = `rgba(${r},${g},${b},${alpha})`;
+        ctx.fillText(char, x, y);
+
+        if (y > H && Math.random() > 0.97) {
+          drops[i] = 0;
+        }
+        drops[i]++;
+      }
+    }
+    requestAnimationFrame(drawMatrix);
+
+    /* ---------------- Floating decorative orbs ---------------- */
+    const orbColors = ["#ff3b5c", "#c77dff", "#4cc9f0", "#ffd166", "#39ff8f"];
+    const orbLayer = document.getElementById('orbs');
+    const orbCount = 6;
+    const orbEls = [];
+
+    for (let i = 0; i < orbCount; i++) {
+      const el = document.createElement('div');
+      el.className = 'orb';
+      const size = 14 + Math.random() * 22;
+      el.style.width = size + "px";
+      el.style.height = size + "px";
+      el.style.background = orbColors[i % orbColors.length];
+      orbLayer.appendChild(el);
+      orbEls.push({
+        el,
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15
+      });
+    }
+
+    function animateOrbs() {
+      orbEls.forEach(o => {
+        o.x += o.vx;
+        o.y += o.vy;
+        if (o.x < 0 || o.x > window.innerWidth) o.vx *= -1;
+        if (o.y < 0 || o.y > window.innerHeight) o.vy *= -1;
+        o.el.style.transform = `translate(${o.x}px, ${o.y}px)`;
+      });
+      requestAnimationFrame(animateOrbs);
+    }
+    animateOrbs();
+
+    /* ---------------- Fireworks (bắn liên tục từ 4 góc) ---------------- */
+    const fwCanvas = document.getElementById('fireworks');
+    const fwCtx = fwCanvas.getContext('2d');
+    let fwW, fwH;
+    function resizeFw() {
+      fwW = fwCanvas.width = window.innerWidth;
+      fwH = fwCanvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeFw);
+    resizeFw();
+
+    const fwColors = ["#ff3b5c", "#c77dff", "#4cc9f0", "#ffd166", "#39ff8f", "#ffffff", "#ff6b9d", "#00d4ff", "#ffa500"];
+    let rockets = [];
+    let particles = [];
+    let fwRunning = false;
+    let fwInterval = null;
+
+    function spawnBurst(x, y, color) {
+      const count = 50 + Math.floor(Math.random() * 20);
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+        const speed = 2.5 + Math.random() * 4.5;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.008 + Math.random() * 0.012,
+          color,
+          size: 1.6 + Math.random() * 2.2
+        });
+      }
+    }
+
+    function launchRocket(x0, y0, targetX, targetY, color) {
+      rockets.push({
+        x: x0, y: y0,
+        startX: x0, startY: y0,
+        targetX, targetY,
+        t: 0,
+        duration: 45 + Math.random() * 25,
+        color
+      });
+    }
+
+    /* Bắn 1 wave từ 4 góc, mỗi góc bắn 1-2 rocket */
+    function launchOneWave() {
+      const margin = Math.min(fwW, fwH) * 0.08;
+      const corners = [
+        { x: margin, y: margin },
+        { x: fwW - margin, y: margin },
+        { x: margin, y: fwH - margin },
+        { x: fwW - margin, y: fwH - margin }
+      ];
+      const centerX = fwW / 2, centerY = fwH * 0.42;
+
+      corners.forEach((c, i) => {
+        setTimeout(() => {
+          const color = fwColors[Math.floor(Math.random() * fwColors.length)];
+          const targetX = centerX + (Math.random() - 0.5) * fwW * 0.4;
+          const targetY = centerY + (Math.random() - 0.5) * fwH * 0.3;
+          launchRocket(c.x, c.y, targetX, targetY, color);
+
+          // 50% chance bắn thêm 1 rocket từ cùng góc
+          if (Math.random() > 0.5) {
+            setTimeout(() => {
+              const color2 = fwColors[Math.floor(Math.random() * fwColors.length)];
+              const tx2 = centerX + (Math.random() - 0.5) * fwW * 0.5;
+              const ty2 = centerY + (Math.random() - 0.5) * fwH * 0.35;
+              launchRocket(c.x, c.y, tx2, ty2, color2);
+            }, 80 + Math.random() * 120);
+          }
+        }, i * (100 + Math.random() * 80));
+      });
+    }
+
+    /* Bắt đầu bắn pháo hoa liên tục */
+    function startContinuousFireworks() {
+      if (fwInterval) return; // đã chạy rồi
+
+      // Bắn ngay đợt đầu tiên
+      launchOneWave();
+
+      // Lặp lại mỗi 500-800ms
+      fwInterval = setInterval(() => {
+        launchOneWave();
+      }, 600);
+
+      if (!fwRunning) {
+        fwRunning = true;
+        requestAnimationFrame(fireworksLoop);
+      }
+    }
+
+    /* Giữ lại hàm cũ cho tương thích, giờ gọi hàm mới */
+    function launchFireworksFromCorners() {
+      startContinuousFireworks();
+    }
+
+    function fireworksLoop() {
+      fwCtx.clearRect(0, 0, fwW, fwH);
+
+      // Vẽ trail mờ cho hiệu ứng đẹp hơn
+      rockets = rockets.filter(r => {
+        r.t++;
+        const p = Math.min(r.t / r.duration, 1);
+        r.x = r.startX + (r.targetX - r.startX) * p;
+        r.y = r.startY + (r.targetY - r.startY) * p - Math.sin(p * Math.PI) * 50;
+
+        // Trail nhỏ phía sau rocket
+        fwCtx.beginPath();
+        fwCtx.arc(r.x, r.y, 2.8, 0, Math.PI * 2);
+        fwCtx.fillStyle = r.color;
+        fwCtx.shadowColor = r.color;
+        fwCtx.shadowBlur = 14;
+        fwCtx.fill();
+        fwCtx.shadowBlur = 0;
+
+        // Sparks trail
+        if (Math.random() > 0.4) {
+          particles.push({
+            x: r.x + (Math.random() - 0.5) * 3,
+            y: r.y + (Math.random() - 0.5) * 3,
+            vx: (Math.random() - 0.5) * 0.8,
+            vy: (Math.random() - 0.5) * 0.8,
+            life: 0.4 + Math.random() * 0.3,
+            decay: 0.03 + Math.random() * 0.02,
+            color: r.color,
+            size: 0.8 + Math.random() * 0.8
+          });
+        }
+
+        if (p >= 1) {
+          spawnBurst(r.x, r.y, r.color);
+          return false;
+        }
+        return true;
+      });
+
+      particles = particles.filter(pt => {
+        pt.vy += 0.04; // gravity
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.vx *= 0.99; // friction
+        pt.vy *= 0.99;
+        pt.life -= pt.decay;
+        if (pt.life <= 0) return false;
+
+        fwCtx.globalAlpha = Math.max(pt.life, 0);
+        fwCtx.beginPath();
+        fwCtx.arc(pt.x, pt.y, pt.size * pt.life, 0, Math.PI * 2);
+        fwCtx.fillStyle = pt.color;
+        fwCtx.shadowColor = pt.color;
+        fwCtx.shadowBlur = 4;
+        fwCtx.fill();
+        fwCtx.shadowBlur = 0;
+        fwCtx.globalAlpha = 1;
+        return true;
+      });
+
+      if (fwRunning) {
+        requestAnimationFrame(fireworksLoop);
+      }
+    }
+
+    /* Dừng pháo hoa và xóa canvas */
+    function stopFireworks() {
+      if (fwInterval) {
+        clearInterval(fwInterval);
+        fwInterval = null;
+      }
+      fwRunning = false;
+      rockets = [];
+      particles = [];
+      fwCtx.clearRect(0, 0, fwW, fwH);
+    }
+
+    /* ---------------- Color palette ---------------- */
+    document.querySelectorAll('.swatch').forEach(sw => {
+      sw.addEventListener('click', () => {
+        document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+        sw.classList.add('active');
+        currentColor = sw.dataset.color;
+        document.documentElement.style.setProperty('--accent', currentColor);
+        document.documentElement.style.setProperty('--accent-dim', currentColor + "55");
+        document.documentElement.style.setProperty('--accent-glow', currentColor + "aa");
+      });
+    });
+
+    /* ---------------- Scene sequence ---------------- */
+    function showScene(id) {
+      document.querySelectorAll('.scene').forEach(s => s.classList.remove('show'));
+      const scene = document.getElementById(id);
+      scene.classList.add('show');
+
+      scene.querySelectorAll('.glitch-text').forEach(el => {
+        el.style.animation = 'none';
+        void el.offsetWidth;
+        el.style.animation = '';
+      });
+
+      if (id === 'scene-hbd') {
+        launchFireworksFromCorners();
+      } else {
+        stopFireworks();
+      }
+
+      // Typewriter effect for wish scene
+      if (id === 'scene-wish') {
+        typewriterWish();
+      }
+    }
+
+    /* ---------- Typewriter effect ---------- */
+    let typewriterTimeout = null;
+
+    function typewriterWish() {
+      // Reset all lines
+      const allLines = document.querySelectorAll('#scene-wish .wish-line, #scene-wish .wish-signature');
+      allLines.forEach(el => {
+        el.textContent = '';
+        el.classList.remove('typing');
+      });
+
+      const lines = Array.from(allLines);
+      let lineIndex = 0;
+
+      function typeLine() {
+        if (lineIndex >= lines.length) return;
+
+        const el = lines[lineIndex];
+        const fullText = el.getAttribute('data-text');
+        const chars = [...fullText]; // handle emoji properly
+        let charIndex = 0;
+
+        el.classList.add('typing');
+
+        // Add cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'wish-cursor';
+        el.appendChild(cursor);
+
+        const speed = el.classList.contains('wish-signature') ? 55 : 35;
+
+        function typeChar() {
+          if (charIndex < chars.length) {
+            // Insert character before cursor
+            const textNode = document.createTextNode(chars[charIndex]);
+            el.insertBefore(textNode, cursor);
+            charIndex++;
+
+            // Random variation in speed for natural feel
+            const delay = speed + Math.random() * 25;
+            typewriterTimeout = setTimeout(typeChar, delay);
+          } else {
+            // Line done, pause then move to next
+            cursor.remove();
+            lineIndex++;
+            typewriterTimeout = setTimeout(typeLine, 400);
+          }
+        }
+
+        typeChar();
+      }
+
+      // Start after a brief pause
+      typewriterTimeout = setTimeout(typeLine, 500);
+    }
+
+    function runSequence() {
+      showScene('scene-hbd');
+      setTimeout(() => showScene('scene-name'), 5000);
+      setTimeout(() => showScene('scene-date'), 10000);
+      setTimeout(() => showScene('scene-final'), 15000);
+      setTimeout(() => showScene('scene-wish'), 21000);
+    }
+
+    /* ---------------- Start button ---------------- */
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('start-screen').classList.add('hidden');
+      const music = document.getElementById('bgmusic');
+      music.volume = 0.7;
+      music.play().catch(() => {});
+      runSequence();
+    });
+  </script>
+
+</body>
+
+</html>

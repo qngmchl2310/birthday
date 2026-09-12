@@ -476,9 +476,7 @@
       <div class="line2 glitch-text glitch-white" id="hbd-text" data-val="HAPPY BIRTHDAY">HAPPY BIRTHDAY</div>
     </div>
 
-    <div class="scene" id="scene-name">
-      <div class="name glitch-text glitch-light" id="name-text" data-val="Tên Của Bạn">Tên Của Bạn</div>
-    </div>
+
 
 
     <div class="scene" id="scene-final">
@@ -516,7 +514,7 @@
       el.textContent = text;
       el.setAttribute('data-val', text);
     }
-    setGlitchText(document.getElementById('name-text'), PERSON_NAME);
+
 
     /* ---------------- Matrix rain ---------------- */
     const canvas = document.getElementById('matrix');
@@ -880,9 +878,8 @@
 
     function runSequence() {
       showScene('scene-hbd');
-      setTimeout(() => showScene('scene-name'), 5000);
-      setTimeout(() => showScene('scene-final'), 10000);
-      setTimeout(() => showScene('scene-wish'), 16000);
+      setTimeout(() => showScene('scene-final'), 5000);
+      setTimeout(() => showScene('scene-wish'), 11000);
     }
 
     /* ---------------- Start button ---------------- */

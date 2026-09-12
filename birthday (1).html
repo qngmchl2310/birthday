@@ -480,9 +480,6 @@
       <div class="name glitch-text glitch-light" id="name-text" data-val="Tên Của Bạn">Tên Của Bạn</div>
     </div>
 
-    <div class="scene" id="scene-date">
-      <div class="date glitch-text glitch-white" id="date-text" data-val="01 / 01 / 2000">01 / 01 / 2000</div>
-    </div>
 
     <div class="scene" id="scene-final">
       <div class="final2 glitch-text" id="final-text" data-val="HAPPY 43">HAPPY 43+</div>
@@ -520,7 +517,6 @@
       el.setAttribute('data-val', text);
     }
     setGlitchText(document.getElementById('name-text'), PERSON_NAME);
-    setGlitchText(document.getElementById('date-text'), BIRTH_DATE);
 
     /* ---------------- Matrix rain ---------------- */
     const canvas = document.getElementById('matrix');
@@ -885,9 +881,8 @@
     function runSequence() {
       showScene('scene-hbd');
       setTimeout(() => showScene('scene-name'), 5000);
-      setTimeout(() => showScene('scene-date'), 10000);
-      setTimeout(() => showScene('scene-final'), 15000);
-      setTimeout(() => showScene('scene-wish'), 21000);
+      setTimeout(() => showScene('scene-final'), 10000);
+      setTimeout(() => showScene('scene-wish'), 16000);
     }
 
     /* ---------------- Start button ---------------- */
